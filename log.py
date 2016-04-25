@@ -11,22 +11,29 @@ from logging.handlers import TimedRotatingFileHandler
 __inited_loggers = {}
 __all__ = ['get_logger']
 
+# the code of output strings. Default is UTF-8
+CODE = 'utf-8'
+# the path of log dir relative to the path of this file
+RELATIVE_PATH = '../log'
+
 
 class Logger(logging.Logger):
 
     def __init__(self, name, level=logging.NOTSET):
         super(Logger, self).__init__(name, level)
 
-    def _compose_msg(self, code='utf-8', *args, **kwargs):
+    def _compose_msg(self, *args, **kwargs):
         """Compose pairs in arguments to format as key=value
 
         Args:
-            pair: the log messages. it must follow {key: value} format.
-            encode_type: the code of output strings. Default is UTF-8
+            args: the string log message.
+            kwargs: the log messages. it must follow {key: value} format.
 
         Returns:
             return the msg_list joint by '\t'.
         """
+        global CODE
+
         msg_list = []
         if len(args) > 0:  # some string should log directly.
             msg_list.extend(map(lambda x: str(x), args))
@@ -34,8 +41,8 @@ class Logger(logging.Logger):
         if len(kwargs) > 0:  # some pairs should log with compose
             for k, v in kwargs.items():
                 # encode to code
-                k = k.encode(code) if isinstance(k, unicode) else str(k)
-                v = v.encode(code) if isinstance(v, unicode) else str(v)
+                k = k.encode(CODE) if isinstance(k, unicode) else str(k)
+                v = v.encode(CODE) if isinstance(v, unicode) else str(v)
                 msg_list.append('{0}={1}'.format(k, v))
 
         return '\t'.join(msg_list)
@@ -182,14 +189,14 @@ def get_logger(name, **kwargs):
         name: logger name
         file_level: the level for file to write (OPTION)
     """
-    global __inited_loggers
+    global __inited_loggers, RELATIVE_PATH
 
     # not exists, initialize one
     if name not in __inited_loggers:
         # the root path for storing log files
         log_dir = os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '../log',
+            RELATIVE_PATH,
         )
         # is the path exists? or create it
         if not os.path.exists(log_dir):
